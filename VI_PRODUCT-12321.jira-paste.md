@@ -1,7 +1,7 @@
----
-key: PRODUCT-12321
-title: NAM Traceroute capability
-status: Draft (Use Case Defined target)
+The content of this VI is in github: [VI content on main branch](https://github.com/blourdel/NAM_TRACEROUTE_PRODUCT-12321/blob/main/VI_PRODUCT-12321.md)
+
+**DO NOT EDIT THE VI TEXT! The original is maintained in github and the Jira description will be automatically overwritten.**
+
 ---
 
 # VI PRODUCT-12321 — NAM Traceroute capability

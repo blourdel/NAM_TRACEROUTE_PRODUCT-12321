@@ -5,7 +5,11 @@
       "PowerShell(Test-Path \"$env:USERPROFILE\\\\.claude\\\\scripts\\\\vi_to_jira.py\"; Test-Path \"$env:USERPROFILE\\\\.claude\\\\scripts\"; Test-Path \"$env:USERPROFILE\\\\.claude\")",
       "Bash(git remote *)",
       "PowerShell(python \"$env:USERPROFILE\\\\.claude\\\\scripts\\\\vi_to_jira.py\" \"VI_PRODUCT-12321.md\" \"PRODUCT-12321\" \"main\" \"https://github.com/blourdel/NAM_TRACEROUTE_PRODUCT-12321/blob/main/VI_PRODUCT-12321.md\")",
-      "PowerShell(\\(Get-Command acli-pii -ErrorAction SilentlyContinue\\).Source; \\(Get-Command acli -ErrorAction SilentlyContinue\\).Source; \\(Get-Command acli-pii.cmd -ErrorAction SilentlyContinue\\).Source; \\(Get-Command acli-pii.bat -ErrorAction SilentlyContinue\\).Source; \\(Get-Command acli-pii.exe -ErrorAction SilentlyContinue\\).Source)"
+      "PowerShell(\\(Get-Command acli-pii -ErrorAction SilentlyContinue\\).Source; \\(Get-Command acli -ErrorAction SilentlyContinue\\).Source; \\(Get-Command acli-pii.cmd -ErrorAction SilentlyContinue\\).Source; \\(Get-Command acli-pii.bat -ErrorAction SilentlyContinue\\).Source; \\(Get-Command acli-pii.exe -ErrorAction SilentlyContinue\\).Source)",
+      "PowerShell(python -c \"import acli_pii; print\\(acli_pii.__file__\\)\" 2>&1)",
+      "PowerShell(python -m acli_pii --help 2>&1)",
+      "Read(//c/Users/benoit.lourdelet/OneDrive - Dynatrace/Documents/Claude/Atlassian/**)",
+      "Read(//c/Users/benoit.lourdelet/OneDrive - Dynatrace/Documents/Claude/**)"
     ]
   }
 }
