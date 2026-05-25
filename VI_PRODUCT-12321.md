@@ -11,8 +11,7 @@
 >
 > *Scope note*: This VI is exclusively about the NAM Traceroute synthetic
 > test. Probe protocols within traceroute (ICMP, UDP, TCP) are in scope.
-> Standalone Ping monitors and standalone TCP-connect monitors are out
-> of scope and addressed by sibling VIs if needed.
+
 
 ## Short Abstract / Blogline
 
@@ -23,23 +22,29 @@ issues using NAM data alone — at parity with Datadog Network Path and
 SolarWinds NetPath.
 
 ## Customer Zero
-
-Proposed assignment — to be confirmed with PM and capability lead:
-
 - *Primary*: Dynatrace internal NetOps/SRE team operating production
-  NAM Traceroute monitors across multi-region infrastructure. Owns
-  ~300 traceroute monitors today and has filed escalations citing the
+  NAM Traceroute monitors across multi-region infrastructure. They need
   hop-visibility, path-change, and ICMP-blocked-path gaps captured in
   the WHY section.
-- *Secondary (design partner)*: One named enterprise customer drawn
-  from the current network-monitoring escalation backlog, selected
-  jointly by PM and Field/Support. Acts as external validation during
-  Public Preview.
 
 Customer Zero validates: traceroute multi-protocol behavior, per-hop
 enrichment accuracy, path-change event quality, alert quality under
-low sample counts, and no-regression for their existing traceroute
-monitor fleet.
+low sample counts.
+
+
+## Customer One
+ A number of customers are already using the traceroute extension. They will be approached to be design partners of NAM traceroute. They cts as external validation during Public Preview.
+
+ Potential customer list
+ 
+| Name | Dynatrace contact |
+| --- | --- |
+| HKG | Derek Choi |
+| Tata | Bharat Singh |
+| Cardinal Health | David Detoro |
+| Mass General Brigham | Tim Lowell |
+| Ausgleichskasse des Kantons Bern | Florian Buehler |
+
 
 ## Target Audience
 
@@ -49,14 +54,11 @@ monitor fleet.
   incident triage and postmortems.
 - Platform Administrators managing large fleets of NAM traceroute
   monitors and rollout policies.
-- Support and field teams handling customer escalations around NAM
-  synthetic monitoring.
-- Sales Engineers competing against Datadog Network Path and SolarWinds
-  NetPath in network-monitoring deals.
+
 
 ## WHY
 
-NAM Traceroute today validates that a target is reachable along *some*
+Ping or TCP NAM  validates that a target is reachable along *some*
 path but stops short of the diagnostic depth operators need for modern
 network troubleshooting. As a result, investigations escalate to
 external tools (mtr, traceroute, tcptraceroute, packet captures) or
@@ -68,9 +70,9 @@ for network synthetic monitoring.
 
 ### Where it hurts
 
-- *No hop-level visibility worth using*: Existing NAM traceroute
-  output is sparse — operators cannot tell *where* on the path the
-  failure or latency lives without external tooling.
+- *No hop-level visibility worth using*: Existing Extension traceroute
+  output is not integrated with in the platform and is not integrated
+   in the Synthetic app, making it difficult to manage.
 - *No path-change detection*: Routing changes (ISP failover, BGP
   reconvergence, MPLS re-routes) silently affect performance and NAM
   has no signal for them.
@@ -78,11 +80,9 @@ for network synthetic monitoring.
   ASN/owner labels, so operators cannot tell whose network they are
   looking at.
 - *ICMP-blocked paths*: Enterprise firewalls and many ISPs commonly
-  drop or rate-limit ICMP, leaving classic ICMP-only traceroute blind.
+  drop or rate-limit ICMP, leaving classic ICMP-only traceroute 
+  provide by the traceroute extension blind.
   Competitors default to TCP-based path discovery for this reason.
-- *Configuration rigidity*: Fixed protocol, max-hops, and probe-count
-  defaults don't fit heterogeneous environments (long-haul WAN,
-  low-MTU paths, firewalled segments, multi-cloud egress).
 - *No native path alerting*: Without per-hop and path-change
   thresholds, traceroute is diagnostic-only, so operators don't keep
   monitors enabled and lose the proactive signal.
@@ -221,11 +221,6 @@ path-analysis capability. NAM must reach parity to remain credible in
 head-to-head deals and to remove the operator workflows that currently
 bridge to external tools for hop-level diagnostics.
 
-Source for the items below is publicly available product documentation
-as of 2026-05. The competitive intelligence and field teams should
-validate edge cases and pricing/licensing assumptions before any of
-these claims are used in external positioning.
-
 ### Datadog — Network Performance Monitoring and Network Path
 
 - Hop-by-hop path analysis between source agent and destination
@@ -240,6 +235,9 @@ these claims are used in external positioning.
 - Native alerting on path change, per-hop latency, and per-hop loss.
 - Tight integration with Datadog APM, Synthetics, and Service Map for
   end-to-end correlation.
+
+
+  Blog: https://www.datadoghq.com/blog/network-test-protocols/
 
 ### SolarWinds — NetPath, NPM, Engineer's Toolset
 
@@ -264,25 +262,24 @@ these claims are used in external positioning.
 shippable. `partial` = exists today but does not meet operator
 expectations versus the competitive bar.
 
-| Capability                                  | Datadog   | SolarWinds   | NAM today | NAM target this VI |
+| Capability                                  | Datadog   | SolarWinds   | Dynatrace today | NAM target this VI |
 |---------------------------------------------|:---------:|:------------:|:---------:|:------------------:|
-| ICMP-probe traceroute                       | yes       | yes          | partial   | yes                |
+| ICMP-probe traceroute                       | yes       | yes          | Extension  | yes                |
 | TCP-probe traceroute                        | yes       | yes (default)| no        | yes                |
 | UDP-probe traceroute                        | yes       | yes          | no        | yes                |
 | Automatic probe-protocol fallback           | yes       | partial      | no        | yes                |
-| Per-hop latency                             | yes       | yes          | partial   | yes                |
+| Per-hop latency                             | yes       | yes          | Extension   | yes                |
 | Per-hop packet loss                         | yes       | yes          | no        | yes                |
 | Per-hop jitter                              | yes       | yes          | no        | yes                |
 | Reverse DNS enrichment per hop              | yes       | yes          | no        | yes                |
 | ASN / owner enrichment per hop              | yes       | yes          | no        | yes                |
 | Network-layer segmentation (LAN/WAN/cloud)  | partial   | yes          | no        | yes                |
-| Continuous scheduled path probing           | yes       | yes          | partial   | yes                |
-| Configurable max-hops and probe count       | yes       | yes          | partial   | yes                |
-| Path-change detection                       | yes       | yes          | no        | yes                |
+| Continuous scheduled path probing           | yes       | yes          | Extension  | yes                |
+| Configurable max-hops and probe count       | yes       | yes          | Extension  | yes                |
+| Path-change detection                       | yes       | yes          | Extension | yes                |
 | Historical path diff / replay               | yes       | yes          | no        | yes                |
 | Native alerting on path change              | yes       | yes          | no        | yes                |
 | Native alerting on per-hop loss / latency   | yes       | yes          | no        | yes                |
-| Multi-source probing                        | yes       | yes          | yes       | yes (preserved)    |
 | Cloud topology overlay (AWS/Azure/GCP)      | yes       | partial      | no        | future VI          |
 | Ad-hoc on-demand probe tooling              | partial   | yes (toolset)| partial   | future VI          |
 
@@ -346,8 +343,7 @@ the VI is competitively complete when:
    path to confirm a routing change as root cause of an incident.
 6. Analyst queries historical NAM data to trend per-hop metrics and
    path-change frequency across regions and correlate with incidents.
-7. Sales engineer runs a head-to-head demo against Datadog Network
-   Path or SolarWinds NetPath using the same target and time window.
+
 
 ### User Stories
 
@@ -374,9 +370,7 @@ the VI is competitively complete when:
 - *Analyst*: "As an analyst, I want per-hop metrics and path-change
   events available in DQL and dashboards, so I can correlate regional
   path trends with incidents."
-- *Sales engineer*: "As a sales engineer, I want a side-by-side demo
-  against Datadog Network Path and SolarWinds NetPath, so I can close
-  network-monitoring deals without losing on capability checklists."
+
 
 ### Solution Concept
 
@@ -396,7 +390,7 @@ the VI is competitively complete when:
    a rolling "last known good" path and emits a path-change event
    when hop sequence, ASN sequence, or layer segmentation changes
    meaningfully.
-6. Surface new fields in the monitor configuration UI and result view
+6. Surface new fields in the monitor configuration UI 
    with inline guidance, including a hop-by-hop visualization with
    layer segmentation (LAN / WAN / ISP / cloud / target zone) and a
    path-diff view; ship recommended thresholds for alerting templates,
@@ -441,31 +435,20 @@ the VI is competitively complete when:
   thresholds in the existing alerting surface.
 - *Documentation / Field enablement*: help pages, release note,
   competitive positioning deck, head-to-head demo scripts.
-- *Cloud Automation / Workflows / Notifier integrations*: changelog
-  awareness; no required change since payload extensions are additive.
-- *Competitive intelligence / Field*: validate the parity matrix and
-  competitor claims in *Competitive Landscape* before any external use.
+
 
 ## Non-Functional Requirements
 
-- *Performance*: No material degradation in traceroute execution
-  throughput at current baseline scale; new metric emission and hop
+- *Performance*: similar to ICMP and TCP NAM; new metric emission and hop
   enrichment stay within an agreed per-run resource budget.
 - *Reliability*: Result completeness and protocol-fallback behavior
   consistent across retries and partial samples.
 - *Scalability*: Schema and pipeline support existing and projected
   traceroute monitor volume — including the per-hop time series —
   without breaking ingestion SLOs.
-- *Security*: No exposure of internal topology, endpoint credentials,
-  or other sensitive data in expanded results or enrichment lookups.
 - *Usability*: New options (probe protocol, max-hops, probe count,
   path-change sensitivity) are understandable to a NetOps generalist;
   defaults are safe.
-- *Compatibility*: Existing traceroute monitor definitions and
-  historical data remain valid; payload extensions are additive.
-- *Privacy of enrichment lookups*: Reverse DNS and ASN/owner lookups
-  must not leak monitored endpoint identity to external services
-  beyond what is already public.
 
 ## Enablement Requirements
 
@@ -483,12 +466,7 @@ the VI is competitively complete when:
 - *Sales / Field*: SE enablement covering when to use which probe
   protocol, how to interpret path-change events, and head-to-head
   positioning against Datadog Network Path and SolarWinds NetPath.
-- *Partner Alignment*: Confirm with Cloud Automation, Workflows, and
-  third-party integrations (for example ServiceNow, PagerDuty
-  notifiers) that consume traceroute monitor results. Payload
-  extensions stay additive; existing fields and types are unchanged
-  so no partner-side change is required, but integration owners are
-  notified via the standard API changelog and given preview access.
+
 
 ## E2E Acceptance Criteria
 
@@ -516,8 +494,6 @@ the VI is competitively complete when:
    and see a side-by-side diff against the previous execution and
    against the last known good path, with changed hops visually
    marked.
-8. *Backward compatibility*: Existing traceroute monitor definitions
-   continue to execute unchanged with no mandatory migration step.
 9. *Alerting on path and hops*: Alerts can target path-change events
    and per-hop loss and latency thresholds, with deterministic
    evaluation and sample-size guards under low sample counts.
@@ -530,8 +506,6 @@ the VI is competitively complete when:
 12. *Documentation*: Customer documentation covers configuration,
     metric interpretation, recommended thresholds, migration guidance,
     and a competitive positioning section with the parity matrix.
-13. *No regression*: Existing dashboards and alert rules built on
-    prior traceroute metrics keep working without modification.
 14. *Competitive parity (per Competitive Landscape)*: Side-by-side
     review against Datadog Network Path and SolarWinds NetPath for
     the three reference scenarios (long-haul WAN, ICMP-blocked path,
@@ -545,8 +519,8 @@ the VI is competitively complete when:
   detection, and the path-diff view. Alerting on path-change events
   and per-hop loss/latency.
 - *Adoption plan (proposed)*:
-  - *Sprint S+1*: Internal NetOps converts ~20 representative
-    traceroute monitors across at least 3 production regions to the
+  - *Sprint S+1*: Internal NetOps converts ~20  representative
+    extension traceroute monitors across at least 3 production regions to the
     new multi-protocol runner with default profiles only — no custom
     values yet.
   - *Sprint S+2*: Expand to ~100 monitors with custom profiles for
@@ -555,19 +529,12 @@ the VI is competitively complete when:
     path-change events and per-hop loss/latency.
   - *Sprint S+3*: Onboard the design-partner customer to Private
     Preview on ~15 of their existing traceroute monitors with no
-    mandatory migration. Run the head-to-head competitive demos
-    against Datadog Network Path and SolarWinds NetPath with the
-    customer present and capture gaps.
+    mandatory migration. 
 - *Success signal*: Customer Zero resolves at least one representative
   routing or peering incident using the new metrics without falling
   back to external tooling, reports zero critical regressions on the
   converted monitors, and confirms alert volume stays within ±10 %
   of the pre-conversion baseline.
-- *Feedback channel*: Dedicated Slack channel `#nam-traceroute-c0`
-  (or the team's existing escalation channel if preferred), plus a
-  30-min weekly sync chaired by the PM for the duration of Customer
-  Zero adoption. Feedback captured in a shared running log linked
-  from the Jira VI.
 - *Exit from Customer Zero*: Internal adoption hits 100 % of planned
   monitors with success signal met, design-partner sign-off recorded,
   and no open Sev-1 / Sev-2 issues against the new code paths.
@@ -599,36 +566,25 @@ the VI is competitively complete when:
 
 ## Out of Scope
 
-- *Standalone Ping (ICMP echo) synthetic test enhancements* — out of
-  this VI; tracked separately if needed.
-- *Standalone TCP-connect synthetic test enhancements* — out of this
-  VI; tracked separately if needed.
+
 - NetFlow enrichment and flow-based diagnostics.
 - L7 transaction synthetic scripting enhancements.
-- New synthetic monitor types beyond Traceroute (HTTP, DNS, and other
-  protocol-specific synthetics remain out of this VI).
 - Cloud topology overlay (AWS / Azure / GCP region, VPC, and managed
-  service labels on traceroute hops) — deferred to a sibling VI.
-- Ad-hoc on-demand probe tooling à la SolarWinds Engineer's Toolset
-  (interactive traceroute and related utilities) — deferred to a
-  sibling VI.
-- Third-party integration redesign.
+  service labels on traceroute hops) — deferred to a sibling VI..
 - Full packet-capture-based diagnostics.
-- UI redesign beyond the minimal additions required to expose new
+- Synthetic App UI redesign beyond the minimal additions required to expose new
   fields, the hop-by-hop visualization, the path-diff view, and the
   competitive-positioning help content.
 
 ## Success Metrics
 
-Evaluated 3–6 months post-GA. Targets are *(proposed)* baselines for
-PM sign-off — refine once internal escalation and competitive-loss
-data is collated:
+Evaluated 3–6 months post-GA.
 
 - *Diagnostic self-sufficiency*: ≥ 70 % of traceroute-related support
   escalations resolved using NAM data only, without falling back to
   external tooling (baseline: current escalation rate from Support
   ticket tags).
-- *Adoption — new monitors*: ≥ 60 % of new traceroute monitors
+- *Adoption — new monitors*: ≥ 60 % of the traceroute monitors
   created in the first 3 months post-GA use at least one expanded
   option (non-ICMP probe protocol, sample-size-aware threshold, or
   path-change alerting).
@@ -644,16 +600,18 @@ data is collated:
 - *Path-change signal value*: ≥ 1 unplanned routing or peering issue
   per Customer Zero per quarter is detected by path-change alerts
   *before* end-user impact is reported, demonstrating proactive value.
-- *Competitive — head-to-head*: Win-rate on deals where Datadog
-  Network Path or SolarWinds NetPath was named as the primary
-  alternative improves measurably vs. the pre-GA baseline (target
-  +10 pp; Field/Competitive team to baseline before kickoff).
+- *Competitive — head-to-head*: Dynatrace can check the "traceroute"  box in all RFP,RFI
 - *Competitive — gap report*: At GA, no item that the parity matrix
   marks `yes` for both Datadog and SolarWinds is missing from NAM
   Traceroute, excluding the explicit deferrals in *Out of Scope*.
-- *Customer satisfaction*: NPS / CSAT from Customer Zero and preview
-  cohort ≥ +30; zero critical regressions reported against existing
-  monitor definitions.
+
+## Cost Analysis
+To be decided later. A few proposals:
+- Option 1:
+  metrics based: similar metric numbers as ICMP or TCP NAM:  target based.
+- Option 2:
+  metrics based: similar metric numbers as ICMP or TCP NAM:  hop based.
+
 
 ## Cost Analysis
 
@@ -687,11 +645,7 @@ data is collated:
 - *Operational*: Moderate support load increase during preview as
   customers adopt path-change alerts (tuning takes time). Offset
   post-GA by reduced escalation volume on traceroute diagnostics.
-- *Savings*: Fewer customer escalations requiring engineering
-  assistance for path-level root-cause analysis; reduced reliance on
-  external tooling alongside NAM; competitive parity protects revenue
-  in deals where Datadog Network Path or SolarWinds NetPath is named
-  as the primary alternative.
+
 
 ## Section-by-section guidance applied
 
@@ -743,43 +697,4 @@ data is collated:
       (UX deliverable — track in design ticket)
 - [ ] Architectural concept document (PA deliverable — link from Jira)
 - [ ] Design QA sign-off (UX-heavy parts only — applies to the form
-      and result view additions)
-
-## Revision history
-
-- 2026-05-23: Restructured against the VCG 2023 official VI template;
-  preserved substance from the prior generic-template draft and
-  surfaced `[TBD]` fields needed before Problem Stated.
-- 2026-05-23: Filled in proposed content for Use Case Defined
-  readiness — Customer Zero assignment, sprint-by-sprint adoption
-  plan, feedback channel, success-metric targets, t-shirt sizing,
-  licensing/partner alignment, user stories, delivery phases, and
-  informational dependencies list. Status target advanced from
-  Problem Stated to Use Case Defined; remaining gates are Jira/UX/PA
-  artifacts.
-- 2026-05-23: Added *Competitive Landscape* section comparing Datadog
-  Network Path and SolarWinds NetPath; added a parity matrix and
-  competitive acceptance criteria. Expanded scope to traceroute
-  parity (multi-protocol probes, per-hop enrichment, path-change
-  detection, path-diff view, native alerting). Engineering effort
-  revised from M to L; cloud-topology overlay and ad-hoc probe
-  tooling explicitly deferred to sibling VIs. Competitive
-  intelligence team to validate competitor claims before external
-  use.
-- 2026-05-23: Narrowed scope to Traceroute only. Removed all
-  references to standalone Ping (ICMP echo) and standalone TCP
-  (connect) synthetic tests. Probe protocols ICMP, UDP, and TCP are
-  retained as modes of the Traceroute monitor in line with Datadog
-  Network Path and SolarWinds NetPath parity. Updated title, Short
-  Abstract, Customer Zero, WHY, Competitive parity matrix, Functional
-  Requirements (use cases, user stories, solution concept,
-  dependencies), Acceptance Criteria, Customer Zero Planning, E2E
-  Demo, Out of Scope (Ping and TCP synthetic tests explicitly listed
-  as out of scope), Success Metrics, Cost Analysis (effort stays L
-  but workstreams now exclude Ping/TCP runner enhancements), and
-  Section-by-section guidance.
-- 2026-05-23: Added *Traceroute 101* section between WHY and
-  Competitive Landscape — explains how traceroute works in general,
-  then covers ICMP-probe, UDP-probe, and TCP-probe variants with pros
-  and cons each, plus a "when to use which" rule-of-thumb table.
-  Provides shared vocabulary for non-networking reviewers of the VI.
+  and result view additions)
