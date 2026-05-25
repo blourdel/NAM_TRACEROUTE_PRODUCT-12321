@@ -1,4 +1,10 @@
-# VI PRODUCT-12321 — NAM Traceroute capability expansion
+---
+key: PRODUCT-12321
+title: NAM Traceroute capability
+status: Draft (Use Case Defined target)
+---
+
+# VI PRODUCT-12321 — NAM Traceroute capability
 
 - Jira: [PRODUCT-12321](https://dt-rnd.atlassian.net/browse/PRODUCT-12321)
 - Area: NAM synthetic monitors (Traceroute)
