@@ -1,0 +1,390 @@
+# name: custom:extension.traceroute
+# version: 0.0.7
+name: com.dynatrace.extension.traceroute
+version: 4.0.1
+minDynatraceVersion: 1.338.0
+minEECVersion: 1.318.0
+author:
+  name: "Dynatrace"
+
+dashboards:
+  - path: dashboards/overview.json
+
+openpipeline:
+  sources:
+    - displayName: Traceroute
+      sourcePath: openpipeline/metrics.source.json
+      configScope: metrics
+  pipelines:
+    - displayName: Traceroute 
+      pipelinePath: openpipeline/metrics.pipeline.json
+      configScope: metrics
+
+documents:
+  dashboards:
+    # Custom built
+    - displayName: Traceroute Connections
+      path: documents/traceroute.dashboard.json
+    # Auto gen template
+    - displayName: Traceroute Overview
+      path: documents/traceroute_overview.dashboard.json
+
+metrics:
+  - key: traceroute.rtt
+    metadata:
+      displayName: Traceroute RTT
+      description: Traceroute Round Trip time
+      unit: MilliSecond
+      tags:
+        - "traceroute"
+        - "extension"
+        - "network"
+  - key: traceroute.connection
+    metadata:
+      displayName: Traceroute Connected Successfully
+      description: Could the traceroute reach the destination? 1 = Yes, 0 = No
+      unit: Count
+      tags:
+        - "traceroute"
+        - "extension"
+        - "network"
+
+topology:
+  types:
+  # TRACEROUTE DEVICE
+    - name: dynatrace:traceroute_device
+      enabled: true
+      displayName: Traceroute Device
+      rules:
+        - idPattern: traceroute_{device.name}_{device.address}
+          instanceNamePattern: '{device.name} : {device.address}'
+          sources:
+            - sourceType: Metrics
+              condition: $prefix(traceroute.)
+          requiredDimensions:
+            - key: device.name
+              valuePattern: $exists()
+            - key: device.address
+              valuePattern: $exists()
+          attributes:
+            - key: dt.ip_addresses
+              pattern: '{device.address}'
+            - key: dt.dns_names
+              pattern: '{device.name}'
+            - key: dt.security_context
+              displayName: Security Context
+              pattern: '{dt.security_context}'
+  relationships:
+  # Host Calls Traced Device
+    - enabled: true
+      fromType: host
+      typeOfRelation: CALLS
+      toType: dynatrace:traceroute_device
+      sources:
+        - sourceType: Metrics
+          condition: $prefix(traceroute.)
+  # Custom Device = Traced Device with the same IP
+    - enabled: true
+      fromType: custom_device
+      typeOfRelation: SAME_AS
+      toType: dynatrace:traceroute_device
+      sources:
+        - sourceType: Entities
+          mappingRules:
+            - sourceProperty: dt.ip_addresses
+              sourceTransformation: To lower case
+              destinationProperty: dt.ip_addresses
+              destinationTransformation: To lower case
+  # Network Device = Traced Device with the same IP
+    - enabled: true
+      fromType: network:device
+      typeOfRelation: SAME_AS
+      toType: dynatrace:traceroute_device
+      sources:
+        - sourceType: Entities
+          mappingRules:
+            - sourceProperty: dt.ip_addresses
+              sourceTransformation: To lower case
+              destinationProperty: dt.ip_addresses
+              destinationTransformation: To lower case
+  # Network Interface = Traced Device with the same IP
+    - enabled: true
+      fromType: network:interface
+      typeOfRelation: SAME_AS
+      toType: dynatrace:traceroute_device
+      sources:
+        - sourceType: Entities
+          mappingRules:
+            - sourceProperty: dt.ip_addresses
+              sourceTransformation: To lower case
+              destinationProperty: dt.ip_addresses
+              destinationTransformation: To lower case
+  # Host = Traced Device with the same IP
+    - enabled: true
+      fromType: host
+      typeOfRelation: SAME_AS
+      toType: dynatrace:traceroute_device
+      sources:
+        - sourceType: Entities
+          mappingRules:
+            - sourceProperty: dt.ip_addresses
+              sourceTransformation: To lower case
+              destinationProperty: dt.ip_addresses
+              destinationTransformation: To lower case
+
+screens:
+  # Host card injection - show the list of connected devices
+  - entityType: HOST
+    detailsInjections:
+      - key: device_generic_trace
+        type: ENTITIES_LIST
+        conditions:
+          - relatedEntity|entitySelectorTemplate=type(dynatrace:traceroute_device),toRelationship.calls($(entityConditions))
+      - key: device_generic_trace_dql
+        type: DQL_TABLE
+        conditions:
+          - relatedEntity|entitySelectorTemplate=type(dynatrace:traceroute_device),toRelationship.calls($(entityConditions))
+    entitiesListCards:
+      - key: device_generic_trace
+        displayName: Device Connections
+        description: Display the devices that this host connects through (via traceroute)
+        pageSize: 10
+        displayCharts: false
+        displayIcons: true
+        enableDetailsExpandability: true
+        numberOfVisibleCharts: 3
+        entitySelectorTemplate: type(dynatrace:traceroute_device),toRelationship.calls($(entityConditions))
+    dqlTableCards:
+      - key: device_generic_trace_dql
+        displayName: Device Connections
+        description: Display the devices that this host connects through (via traceroute)
+        query:
+          query: >
+            fetch `dt.entity.dynatrace:traceroute_device`
+            | filter called_by[`dt.entity.host`]==$(entityId)
+            | fieldsAdd device = record(entityId=id, displayName=entity.name, dim="dt.entity.dynatrace:traceroute_device")
+          lookups: []
+        columns:
+          - field: device
+            displayName: Name
+            columnType: TEXT
+            widthType: AUTO
+            defaultColumn: false
+            resizable: true
+            sortable: true
+        perspectives:
+          - name: device
+            columns:
+              - field: device
+  # Custom Device Trace - show the custom_devices this has been mapped to
+  - entityType: dynatrace:traceroute_device
+    detailsSettings:
+      staticContent:
+        breadcrumbs:
+          - type: ENTITY_LIST_REF
+            entityType: dynatrace:traceroute_device
+            displayName: Device Traces
+        showProblems: false
+        showProperties: true
+        showTags: true
+        showGlobalFilter: true
+        showAddTag: false
+      layout:
+        autoGenerate: false
+        cards:
+          - key: same_custom_device_entities
+            type: ENTITIES_LIST
+          - key: same_custom_device_entities_dql
+            type: DQL_TABLE
+          - key: same_network_device
+            type: ENTITIES_LIST
+          - key: same_network_device_dql
+            type: DQL_TABLE
+          - key: same_network_interface
+            type: ENTITIES_LIST
+          - key: same_network_interface_dql
+            type: DQL_TABLE
+          - key: same_host_entities
+            type: ENTITIES_LIST
+          - key: same_host_entities_dql
+            type: DQL_TABLE
+          - key: calling_host_entities
+            type: ENTITIES_LIST
+          - key: calling_host_entities_dql
+            type: DQL_TABLE
+    entitiesListCards:
+      - key: same_custom_device_entities
+        displayName: Custom Devices
+        description: Monitored custom devices that match the Ip address of this device trace
+        pageSize: 10
+        displayCharts: false
+        enableDetailsExpandability: false
+        numberOfVisibleCharts: 3
+        displayIcons: true
+        entitySelectorTemplate: type(custom_device),fromRelationship.isSameAs($(entityConditions))
+      - key: same_network_device
+        displayName: Network Devices
+        description: Monitored Network devices that match the Ip address of this device trace
+        pageSize: 10
+        displayCharts: false
+        enableDetailsExpandability: false
+        numberOfVisibleCharts: 3
+        displayIcons: true
+        entitySelectorTemplate: type(network:device),fromRelationship.isSameAs($(entityConditions))
+      - key: same_network_interface
+        displayName: Network Interfaces
+        description: Monitored Network interfaces that match the Ip address of this device trace
+        pageSize: 10
+        displayCharts: false
+        enableDetailsExpandability: false
+        numberOfVisibleCharts: 3
+        displayIcons: true
+        entitySelectorTemplate: type(network:interface),fromRelationship.isSameAs($(entityConditions))
+      - key: same_host_entities
+        displayName: Hosts
+        description: Monitored Hosts that match the Ip address of this device trace
+        pageSize: 10
+        displayCharts: false
+        enableDetailsExpandability: false
+        numberOfVisibleCharts: 3
+        displayIcons: true
+        entitySelectorTemplate: type(host),fromRelationship.isSameAs($(entityConditions))
+      - key: calling_host_entities
+        displayName: Calling Hosts
+        description: Monitored Hosts where this device shows in the traceroute
+        pageSize: 10
+        displayCharts: false
+        enableDetailsExpandability: false
+        numberOfVisibleCharts: 3
+        displayIcons: true
+        entitySelectorTemplate: type(host),fromRelationship.calls($(entityConditions))
+    dqlTableCards:
+      - key: same_custom_device_entities_dql
+        displayName: Custom Devices
+        description: Monitored custom devices that match the Ip address of this device trace
+        query:
+          query: >
+            fetch `dt.entity.custom_device`
+            | filter same_as[`dt.entity.dynatrace:traceroute_device`]==$(entityId)
+            | fieldsAdd device = record(entityId=id, displayName=entity.name, dim="dt.entity.dynatrace:traceroute_device")
+          lookups: []
+        columns:
+          - field: device
+            displayName: Name
+            columnType: TEXT
+            widthType: AUTO
+            defaultColumn: false
+            resizable: true
+            sortable: true
+        perspectives:
+          - name: device
+            columns:
+              - field: device
+      - key: same_network_device_dql
+        displayName: Network Devices
+        description: Monitored Network devices that match the Ip address of this device trace
+        query:
+          query: >
+            fetch `dt.entity.network:device`
+            | filter same_as[`dt.entity.dynatrace:traceroute_device`]==$(entityId)
+            | fieldsAdd device = record(entityId=id, displayName=entity.name, dim="dt.entity.dynatrace:traceroute_device")
+          lookups: []
+        columns:
+          - field: device
+            displayName: Name
+            columnType: TEXT
+            widthType: AUTO
+            defaultColumn: false
+            resizable: true
+            sortable: true
+        perspectives:
+          - name: device
+            columns:
+              - field: device
+      - key: same_network_interface_dql
+        displayName: Network Interfaces
+        description: Monitored Network interfaces that match the Ip address of this device trace
+        query:
+          query: >
+            fetch `dt.entity.network:interface`
+            | filter same_as[`dt.entity.dynatrace:traceroute_device`]==$(entityId)
+            | fieldsAdd device = record(entityId=id, displayName=entity.name, dim="dt.entity.dynatrace:traceroute_device")
+          lookups: []
+        columns:
+          - field: device
+            displayName: Name
+            columnType: TEXT
+            widthType: AUTO
+            defaultColumn: false
+            resizable: true
+            sortable: true
+        perspectives:
+          - name: device
+            columns:
+              - field: device
+      - key: same_host_entities_dql
+        displayName: Hosts
+        description: Monitored Hosts that match the Ip address of this device trace
+        query:
+          query: >
+            fetch `dt.entity.host`
+            | filter same_as[`dt.entity.dynatrace:traceroute_device`]==$(entityId)
+            | fieldsAdd device = record(entityId=id, displayName=entity.name, dim="dt.entity.dynatrace:traceroute_device")
+          lookups: []
+        columns:
+          - field: device
+            displayName: Name
+            columnType: TEXT
+            widthType: AUTO
+            defaultColumn: false
+            resizable: true
+            sortable: true
+        perspectives:
+          - name: device
+            columns:
+              - field: device
+      - key: calling_host_entities_dql
+        displayName: Calling Hosts
+        description: Monitored Hosts where this device shows in the traceroute
+        query:
+          query: >
+            fetch `dt.entity.host`
+            | filter calls[`dt.entity.dynatrace:traceroute_device`]==$(entityId)
+            | fieldsAdd device = record(entityId=id, displayName=entity.name, dim="dt.entity.dynatrace:traceroute_device")
+          lookups: []
+        columns:
+          - field: device
+            displayName: Name
+            columnType: TEXT
+            widthType: AUTO
+            defaultColumn: false
+            resizable: true
+            sortable: true
+        perspectives:
+          - name: device
+            columns:
+              - field: device
+python:
+  runtime:
+    module: traceroute
+    version:
+      min: "3.10"
+  featureSets:
+    - featureSet: default
+      metrics:
+        - key: traceroute.rtt
+        - key: traceroute.connection
+        # - key: traceroute.loss_percent
+  activation:
+    remote:
+      path: activationSchema.json
+    local:
+      path: activationSchema.json
+
+keywords:
+  - title:traceroute
+  - category:network
+  - tech:connectivity
+  - vendor:other
+  - icon:extensions
+  - entity:None
