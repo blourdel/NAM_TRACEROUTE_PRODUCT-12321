@@ -331,11 +331,9 @@ IPv4, IPv6 are supported for all features.
 
 #### December 26 Rally
 
-Finalize metric and hop-record taxonomy; implement multi-protocol runner and data-model updates.
-
-- Linux, including containerized, private locations : ICMP, TCP SYN and TCP SACK
+- Linux traceroute runner, including containerized, private locations only : ICMP, TCP SYN and TCP SACK
 - Reverse DNS enrichement
-- Hop-by-Hop jitter, RTT, packet loss
+- Hop-by-Hop jitter, RTT, packet loss metrics (per hop and target)
 - Max hop and probe count
 - Minimal individual path visualization
 - Alerting
@@ -350,7 +348,7 @@ Finalize metric and hop-record taxonomy; implement multi-protocol runner and dat
 - *Path-comparison service*: diffing engine and path-change event
   emission. Likely a new service co-located with the NAM result
   pipeline.
-- *UI/UX*: Graphical component. 
+- *UI/UX*: Graphical component.
 - *Alerting platform*: support for path-change events and per-hop
   thresholds in the existing alerting surface.
 
@@ -387,8 +385,7 @@ Finalize metric and hop-record taxonomy; implement multi-protocol runner and dat
 
 - Probe protocol selection: NAM Traceroute monitors accept ICMP,
    UDP, or TCP as the probe protocol, with TCP as the recommended
-   default for paths that block ICMP; misconfiguration is surfaced
-   with a clear validation message.
+   default for paths that block ICMP.
 - *Execution output*: Each Traceroute execution returns an ordered
    hop list with per-hop RTT, packet loss, and jitter, with
    explicit sample size, up to a configurable max-hops limit.
@@ -397,27 +394,24 @@ Finalize metric and hop-record taxonomy; implement multi-protocol runner and dat
    with safe defaults.
 - *Hop enrichment*: Every resolved hop in a Traceroute result is
    enriched with reverse DNS (when available).
-- Alerting on path and hops: Alerts can target path-change events
-   and per-hop loss and RTT thresholds, with deterministic
-   evaluation and sample-size guards under low sample counts.
+- Alerting on target and hops: Alerts can target per-hop loss, jitter and RTT thresholds.
 - Persistence and query: Hop sequences and per-hop time series are
     persisted and queryable in existing dashboarding and historical
     analysis surfaces end-to-end.
 - Multi-location probing: Traceroute monitors can run from multiple
-    location to the same target.
+    location to the same target but to a single target.
 
 ## December 26 Rally Customer Zero Planning
 
 - *Subset for Customer Zero*: Traceroute multi-protocol (ICMP / UDP /
   TCP probes) with automatic fallback, per-hop enrichment, path-change
-  detection, and the path-diff view. Alerting on path-change events
-  and per-hop loss/RTT.
+  detection. Alerting on per-hop loss/RTT.
 - *Success signal*: Customer Zero resolves at least one representative
   routing or peering incident using NAM traceroute without falling
   back to external tooling.
 - *Exit from Customer Zero*: Internal adoption hits 100 % of planned
   monitors with success signal met, design-partner sign-off recorded,
-  and no open Sev-1 / Sev-2 issues against the new code paths.
+  and no open Sev-1 / Sev-2 issues against the new code.
 
 ## E2E Demo (for acceptance)
 
@@ -426,18 +420,15 @@ Finalize metric and hop-record taxonomy; implement multi-protocol runner and dat
 2. Run the monitor against a target reachable only through an
    ICMP-blocking firewall; show hop list with reverse DNS, ASN/owner,
    layer segmentation, and per-hop RTT/loss/jitter.
-3. Re-run the monitor after forcing a path change (for example switch
-   source region) and show the path-diff view side-by-side with the
-   previous path; show the path-change event in the events surface.
-4. Open an alert template, set thresholds on path-change events,
+3. Open an alert template, set thresholds on path-change events,
    per-hop loss, and per-hop RTT.
-5. Open a dashboard or query surface and show per-hop metrics and
+4. Open a dashboard or query surface and show per-hop metrics and
    path-change events trending over time.
-6. Run the head-to-head competitive demo: same target, same time,
+5. Run the head-to-head competitive demo: same target, same time,
    NAM Traceroute alongside Datadog Network Path and SolarWinds
    NetPath; walk through the parity-matrix items and show no missing
    capability for the items committed to this VI.
-7. Show the published help page covering the new options and the
+6. Show the published help page covering the new options and the
    competitive positioning section.
 
 ## Out of Scope
