@@ -278,14 +278,12 @@ As per other NAM: 1 minute minimum, to 1 hour and custom
   - Jitter
   - Per hop delay
 
-- Failed monitor
-
-- Perhop to hop delay
+- Target not reached
 
 ##### Warning Signals
 
 - Based on user setting: Target not reached
-- Based on user setting: Per hop threshold or baseline
+- Based on user setting: Per hop metrics thresholds or baseline
 - Path variation: configurable based on the number of hop variation
 
 ##### INFO Signals
