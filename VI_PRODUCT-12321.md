@@ -76,6 +76,406 @@ External tooling and competitor products fill these gaps today, which
 fragments the operator workflow and weakens the case for NAM as the
 primary network synthetic platform.
 
+## Competitive Landscape
+
+Datadog and SolarWinds set the de-facto bar for traceroute and
+path-analysis capability. NAM must reach parity to remain credible in
+head-to-head deals and to remove the operator workflows that currently
+bridge to external tools for hop-level diagnostics.
+
+### Datadog — Network Performance Monitoring and Network Path
+
+- Hop-by-hop path analysis between source agent and destination
+  endpoint, run continuously on a schedule.
+- Multi-protocol probes (ICMP, UDP, TCP) with automatic fallback so
+  paths resolve even when intermediate devices rate-limit or drop ICMP.
+- Per-hop RTT, packet loss, and jitter with sample-size context.
+- Reverse DNS and ASN/owner enrichment on every hop.
+- Cloud topology overlay — hops on AWS, Azure, and GCP are labelled
+  with region, VPC, and managed-service identifiers.
+- Path-change detection with historical diff and replay.
+- Native alerting on path change, per-hop RTT, and per-hop loss.
+- Tight integration with Datadog APM, Synthetics, and Service Map for
+  end-to-end correlation.
+
+  [Datadog traceroute blog](https://www.datadoghq.com/blog/network-test-protocols/)
+  [Datadog traceroute documentation](https://docs.datadoghq.com/synthetics/network_path_tests/)
+
+### SolarWinds — NetPath, NPM, Engineer's Toolset
+
+- TCP-based path discovery as the *default* mode (NetPath), because
+  ICMP is dropped or rate-limited on many enterprise and ISP paths;
+  UDP and ICMP modes available as alternatives.
+- Hop-by-hop RTT, packet loss, and jitter per probe interval.
+- ASN and owner identification per hop, plus network-layer segmentation
+  (LAN, WAN/ISP, cloud, target-service zone) shown visually.
+- Continuous probing from multiple polling agents to the same target,
+  with cross-agent comparison.
+- Path-change tracking with historical replay and snapshot diff.
+- Alerting on path change, hop RTT, and hop loss; integrated into
+  NPM and Server & Application Monitor.
+- Engineer's Toolset adds ad-hoc traceroute and related utilities for
+  on-demand investigation outside of scheduled monitoring.
+
+### Parity Matrix
+
+`NAM target this VI` = parity items committed to in this VI's scope.
+`future VI` = explicitly deferred to a sibling VI to keep this one
+shippable. `partial` = exists today but does not meet operator
+expectations versus the competitive bar.
+
+| Capability                                  | Datadog   | SolarWinds   | Dynatrace today | DT after this VI   |
+|---------------------------------------------|:---------:|:------------:|:---------------:|:------------------:|
+| ICMP-probe traceroute                       | yes       | yes          | Extension       | yes                |
+| TCP-probe traceroute                        | yes       | yes          | no              | yes                |
+| UDP-probe traceroute                        | yes       | yes          | no              | yes                |
+| Per-hop RTT                                 | yes       | yes          | Extension       | yes                |
+| Per-hop jitter                              | yes       | yes          | no              | yes                |
+| Reverse DNS enrichment per hop              | yes       | yes          | no              | yes                |
+| ASN / owner enrichment per hop              | yes       | yes          | no              | No                 |
+| Configurable max-hops and probe count       | yes       | yes          | Extension       | yes                |
+| Path-change detection                       | yes       | yes          | No              | No                 |
+| Historical path diff / replay               | yes       | yes          | no              | No                 |
+| Native alerting on path change              | yes       | yes          | no              | No                 |
+| Native alerting on per-hop loss / RTT       | yes       | yes          | no              | yes                |
+| Ad-hoc on-demand probe                      | partial   | yes          | no              | yes                |
+| Per-hop response %                          | No        | No           | No              | Yes                |
+
+### Priority implications for this VI
+
+- *Probe-protocol parity is non-negotiable*: TCP-probe traceroute is
+  the default in SolarWinds NetPath because ICMP may be rate-limited or
+  blocked across many enterprise paths. NAM must support TCP, UDP, and
+  ICMP probe modes — with automatic fallback — or lose deals where
+  operators need to traverse strict firewalls.
+- *Hop enrichment is the differentiator*: Both competitors enrich every
+  hop with reverse DNS and ASN/owner. Without it, NAM traceroute output
+  reads as "raw IPs" to operators and fails the eye test in side-by-side
+  demos.
+- *Path-change detection drives alert value*: Without it, traceroute is
+  diagnostic-only. With it, traceroute becomes a proactive signal worth
+  keeping monitors enabled for, which sustains adoption.
+- *Deferred items kept the VI shippable*: Cloud-topology overlay and
+  ad-hoc toolset-style utilities are excluded so the core parity bar
+  is reachable in a single release cycle; sibling VIs cover them.
+
+### Competitive Acceptance Criteria
+
+In addition to the per-capability items in *E2E Acceptance Criteria*,
+the VI is competitively complete when:
+
+1. *Side-by-side review*: For three representative customer scenarios
+   (long-haul WAN, ICMP-blocked enterprise path, multi-cloud egress),
+   NAM Traceroute produces diagnostic output equivalent to or better
+   than Datadog Network Path and SolarWinds NetPath on the
+   parity-matrix items committed to this VI.
+2. *Field positioning*: SE enablement materials include a competitive
+   positioning section with the parity matrix and one head-to-head
+   demo per competitor.
+3. *No "go elsewhere" gaps*: No item that the parity matrix marks
+   `yes` for both Datadog and SolarWinds is missing from NAM at GA.
+   Cloud topology overlay and ad-hoc tooling are excluded by the
+   explicit deferrals documented in *Out of Scope*.
+
+## Functional Requirements / Solution Journey
+
+### Use Cases
+
+1. NetOps engineer configures a Traceroute monitor against a critical
+   service, selects the probe protocol (ICMP, UDP, or TCP) per path
+   conditions, and gets a continuously updated hop-by-hop view with
+   reverse-DNS and ASN/owner labels on every hop.
+2. SRE receives an alert when the path to a critical service changes
+   (new hop sequence, new ASN appears, or per-hop RTT/loss crosses
+   a threshold) and opens the historical path diff to see exactly
+   which hops changed and when.
+3. Platform admin rolls out the expanded traceroute capability with
+   safe defaults so existing traceroute monitors continue to run
+   unchanged, then switches selected monitors to TCP-probe mode where
+   ICMP is blocked.
+4. SRE sets thresholds on per-hop loss and per-hop RTT with
+   deterministic behavior under low sample counts (for example
+   "evaluate only when sample size ≥ N").
+5. Investigator opens a historical traceroute execution and side-by-side
+   diffs it against the previous execution and the last known good
+   path to confirm a routing change as root cause of an incident.
+6. Analyst queries historical NAM data to trend per-hop metrics and
+   path-change frequency across regions and correlate with incidents.
+7. During traceroute filtering Traceroute Hops and destination can be selected based on properties defined by the user.
+
+### User Stories
+
+- *NetOps engineer (multi-protocol)*: "As a NetOps engineer, I want a
+  scheduled traceroute that runs over TCP probes when ICMP is blocked,
+  so I can see the path through firewalled segments without external
+  tcptraceroute."
+- *Incident commander (path alerting)*: "As an incident commander, I
+  want to be alerted the moment the path to a Tier-1 service changes
+  hop sequence or ASN, so I know about ISP/peering issues before
+  customers report them."
+- *Investigator (path diff)*: "As an investigator, I want a
+  side-by-side diff of the current path against the last known good
+  path, so I can see exactly which hops changed and stop pasting
+  traceroutes into spreadsheets."
+- *Operator (hop enrichment)*: "As an operator, I want each hop
+  labelled with reverse DNS and ASN/owner, so I immediately know
+  whose network the RTT is in."
+- *Platform admin*: "As a platform admin, I want safe defaults for
+  the new options, so my existing traceroute monitor fleet keeps
+  running without a forced migration."
+- *Alerting owner*: "As an alerting owner, I want sample-size-aware
+  thresholds, so one hop blip doesn't page on-call."
+- *Analyst*: "As an analyst, I want per-hop metrics and path-change
+  events available in DQL and dashboards, so I can correlate regional
+  path trends with incidents."
+
+### Prior work
+
+- [Traceroute extension](https://docs.dynatrace.com/docs/observe/infrastructure-observability/extensions/traceroute)
+- [Traceroute Hub](https://www.dynatrace.com/hub/detail/traceroute/?query=traceroute)
+- [Dev environment](https://yts0540d.dev.apps.dynatracelabs.com/ui/apps/my.traceroute.map/)
+- traceroute_extension.yaml (see attached)
+
+#### Scope
+
+- ICMP only on Linux and Windows
+- Traceroute entity linked to a network:device entity
+
+### Solution Concept
+
+- Introduce NAM Traceroute, single target, multi-protocol implementation supporting ICMP, UDP, and TCP probes with automatic fallback when a protocol is rate-limited or blocked.
+- Extend monitor schema and API to expose new options — probe rotocol, max-hops, per-hop probe count, per-hop timeout, per-hop limit.
+- Add a hop  IP enrichment service that resolves reverse DNS and looks up ASN/owner.
+- Add a path-comparison screen that diffs each new execution against a rolling "last known good" path select from the last 24 hours maximum and emits a path-change event when hop sequence, ASN sequence, or layer segmentation changes.
+- Surface new fields in the monitor configuration UI including a tabular form, single traceroute hop-by-hop visualization, a path-diff view. 
+- Provide OOTB box alerting with default values.
+
+### Configuration
+
+- Frequency
+- number of traceroutes to execute
+
+#### Performance
+
+Future support for "Spaces" is expected to enable per monitor types default values.
+
+Per target:
+
+- RTT, recommended value
+- Jitter, recommended value
+- Max Hop, recommended value
+
+#### Frequency
+
+As per other NAM: 1 minute minimum, to 1 hour and custom
+
+#### Alerting
+
+##### Health Alerts
+
+- Per request performance
+  - RTT
+  - Jitter
+  - Per hop delay
+
+- Failed monitor
+
+- Perhop to hop delay
+
+##### Warning Signals
+
+- Based on user setting: Target not reached
+- Based on user setting: Per hop threshold or baseline
+- Path variation: configurable based on the number of hop variation
+
+##### INFO Signals
+
+- Path variation: configurable based on the number of hop variation
+
+#### Outage and performance
+
+-Default OFF: Generate a problem and send an alert when the monitor is unavailable at all configured locations (global outage).
+
+- Default ON: Generate a problem and send an alert when the monitor is unavailable for one or more consecutive runs at any location.
+
+### Metrics and dimensions
+
+#### Dimensions
+
+All NAM dimensions complemented by:
+
+- Hop id
+
+#### Metrics
+
+Per target:
+
+- Jitter
+- RTT 
+- Packet loss
+
+Per hop:
+
+- Jitter
+- RTT
+- Packet loss
+- Traversal count (number of traceroute going through this hop)
+
+Note:Metrics are reported on a per hop basis, When a target fails, no other metric is  written, The performance metrics are written in all cases
+
+### Delivery Phases based on market priority
+
+The phases content may be altered based on engineering input, as it may be more efficient to group some feature for efficiency purposes.
+
+IPv4, IPv6 are supported for all features.
+
+#### December 26 Rally
+
+Finalize metric and hop-record taxonomy; implement multi-protocol runner and data-model updates.
+
+- Linux, including containerized, private locations : ICMP, TCP SYN and TCP SACK
+- Reverse DNS enrichement
+- Hop-by-Hop jitter, RTT, packet loss
+- Max hop and probe count
+- Minimal individual path visualization
+- Alerting
+- On demand probes (usual 2-3 minute delay)
+
+### Dependencies
+
+- *Traceroute runner*: Windows "tracert" only supports ICMP, while Linux "traceroute" supports ICMP, UDP and TCP SYN
+- *Hop-enrichment service*: reverse DNS resolver and ASN/owner lookup
+  pipeline with caching. Confirm whether an existing internal service
+  can be reused or a new lightweight component is needed.
+- *Path-comparison service*: diffing engine and path-change event
+  emission. Likely a new service co-located with the NAM result
+  pipeline.
+- *UI/UX*: Graphical component. 
+- *Alerting platform*: support for path-change events and per-hop
+  thresholds in the existing alerting surface.
+
+## Non-Functional Requirements
+
+- *Platform*: This is supported in Gen3 only. No support of Gen2.
+- *Performance*: similar to ICMP and TCP NAM; new metric emission and hop
+  enrichment stay within an agreed per-run resource budget.
+- *Reliability*: Result completeness and protocol-fallback behavior
+  consistent across retries and partial samples.
+- *Scalability*: Schema and pipeline support existing and projected
+  traceroute monitor volume — including the per-hop time series —
+  without breaking ingestion SLOs.
+- *Usability*: New options (probe protocol, max-hops, probe count,
+  path-change sensitivity) are understandable to a NetOps generalist;
+  defaults are safe.
+
+## Enablement Requirements
+
+- *Support*: Runbooks updated to interpret per-hop metrics, path-change
+  events, and protocol-fallback behavior; troubleshooting guide
+  published before GA.
+- *Internal Adoption*: Dynatrace internal NetOps/SRE adopts the
+  expanded traceroute monitors before customer-facing rollout.
+  Product Marketing to confirm packaging language before GA.
+- *Marketing*: Release note and short demo video for the launch;
+  competitive-positioning blog post; field enablement deck for AEs
+  and SEs including the parity matrix.
+- *Sales / Field*: SE enablement covering when to use which probe
+  protocol, how to interpret path-change events, and head-to-head
+  positioning against Datadog Network Path and SolarWinds NetPath.
+
+## December 26 Rally E2E Acceptance Criteria
+
+- Probe protocol selection: NAM Traceroute monitors accept ICMP,
+   UDP, or TCP as the probe protocol, with TCP as the recommended
+   default for paths that block ICMP; misconfiguration is surfaced
+   with a clear validation message.
+- *Execution output*: Each Traceroute execution returns an ordered
+   hop list with per-hop RTT, packet loss, and jitter, with
+   explicit sample size, up to a configurable max-hops limit.
+- *Configurable execution*: Operators can configure max-hops,
+   per-hop probe count, per-hop timeout sensitivity
+   with safe defaults.
+- *Hop enrichment*: Every resolved hop in a Traceroute result is
+   enriched with reverse DNS (when available).
+- Alerting on path and hops: Alerts can target path-change events
+   and per-hop loss and RTT thresholds, with deterministic
+   evaluation and sample-size guards under low sample counts.
+- Persistence and query: Hop sequences and per-hop time series are
+    persisted and queryable in existing dashboarding and historical
+    analysis surfaces end-to-end.
+- Multi-location probing: Traceroute monitors can run from multiple
+    location to the same target.
+
+## December 26 Rally Customer Zero Planning
+
+- *Subset for Customer Zero*: Traceroute multi-protocol (ICMP / UDP /
+  TCP probes) with automatic fallback, per-hop enrichment, path-change
+  detection, and the path-diff view. Alerting on path-change events
+  and per-hop loss/RTT.
+- *Success signal*: Customer Zero resolves at least one representative
+  routing or peering incident using NAM traceroute without falling
+  back to external tooling.
+- *Exit from Customer Zero*: Internal adoption hits 100 % of planned
+  monitors with success signal met, design-partner sign-off recorded,
+  and no open Sev-1 / Sev-2 issues against the new code paths.
+
+## E2E Demo (for acceptance)
+
+1. Open monitor creation, choose Traceroute, select TCP as the probe
+   protocol, set max hops and per-hop probe count, save.
+2. Run the monitor against a target reachable only through an
+   ICMP-blocking firewall; show hop list with reverse DNS, ASN/owner,
+   layer segmentation, and per-hop RTT/loss/jitter.
+3. Re-run the monitor after forcing a path change (for example switch
+   source region) and show the path-diff view side-by-side with the
+   previous path; show the path-change event in the events surface.
+4. Open an alert template, set thresholds on path-change events,
+   per-hop loss, and per-hop RTT.
+5. Open a dashboard or query surface and show per-hop metrics and
+   path-change events trending over time.
+6. Run the head-to-head competitive demo: same target, same time,
+   NAM Traceroute alongside Datadog Network Path and SolarWinds
+   NetPath; walk through the parity-matrix items and show no missing
+   capability for the items committed to this VI.
+7. Show the published help page covering the new options and the
+   competitive positioning section.
+
+## Out of Scope
+
+- Windows: ICMP, TCP SYN and TCP SACK
+- Autonomous System (BGP) enrichement
+- NetFlow enrichment and flow-based diagnostics.
+- Application traffic enrichment.
+- Single traceroute visual representation
+- Alterting baseline (if no generic solution is available at implementation time)
+- Public locations
+- Multi target NAM.
+
+## Success Metrics
+
+Evaluated 3–6 months post-GA.
+
+- *Diagnostic self-sufficiency*: ≥ 70 % of traceroute-related support
+  escalations resolved using NAM data only, without falling back to
+  external tooling (baseline: current escalation rate from Support
+  ticket tags).
+- *Adoption — new monitors*: ≥ 60 % of the traceroute monitors
+  created in the first 3 months post-GA use at least one expanded
+  option (non-ICMP probe protocol,
+  path-change alerting).
+- *Path-change signal value*: ≥ 1 unplanned routing or peering issue
+  per Customer Zero per quarter is detected by path-change alerts
+  *before* end-user impact is reported, demonstrating proactive value.
+- *Competitive — head-to-head*: Dynatrace can check the "traceroute"  box in all RFP,RFI
+- *Competitive — gap report*: At GA, no item that the parity matrix
+  marks `yes` for both Datadog and SolarWinds is missing from NAM
+  Traceroute, excluding the explicit deferrals in *Out of Scope*.
+
+## Pricing
+
+It follows the  NAM synthetic entitlement (metric based).
+The billed metrics are defined in the "metrics and dimensions" section.
+
 ## Traceroute 101
 
 This section is background for non-networking readers and for anyone
@@ -90,7 +490,7 @@ revealing the router's IP. Traceroute exploits this by sending a
 sequence of packets with TTL = 1, 2, 3, … and recording which router
 replies at each step, building an ordered list of hops between source
 and destination. The destination itself is identified by a different,
-protocol-specific reply (see below). Latency for each hop is the
+protocol-specific reply (see below). RTT for each hop is the
 round-trip time of that probe.
 
 Three things differ between protocol variants: what kind of packet the
@@ -115,7 +515,7 @@ replies with ICMP Echo Reply.
   - Enterprise firewalls and many ISPs rate-limit or drop ICMP, so
     paths through corporate networks frequently end in `* * *`.
   - Some routers deprioritize ICMP generation in software, producing
-    *inflated per-hop latency* that does not reflect the latency a
+    *inflated per-hop RTT* that does not reflect the RTT a
     real TCP/UDP flow would see.
   - Cannot prove that the actual service port on the destination is
     reachable — only that the destination IP is.
@@ -190,437 +590,4 @@ port.
 | Need to discover ECMP / multi-path             | UDP (vary port) or TCP (vary port)      |
 | Validate that the actual service is reachable  | TCP (to the service port)               |
 | ICMP rate-limited or dropped on path           | TCP, fall back to UDP                   |
-| Diagnosing latency a real flow would see       | TCP (matches production hashing best)   |
-
-This VI commits to supporting all three probe modes with automatic
-fallback so operators do not have to pick the "right" protocol up
-front — see *Functional Requirements / Solution Journey* and the
-parity matrix below.
-
-## Competitive Landscape
-
-Datadog and SolarWinds set the de-facto bar for traceroute and
-path-analysis capability. NAM must reach parity to remain credible in
-head-to-head deals and to remove the operator workflows that currently
-bridge to external tools for hop-level diagnostics.
-
-### Datadog — Network Performance Monitoring and Network Path
-
-- Hop-by-hop path analysis between source agent and destination
-  endpoint, run continuously on a schedule.
-- Multi-protocol probes (ICMP, UDP, TCP) with automatic fallback so
-  paths resolve even when intermediate devices rate-limit or drop ICMP.
-- Per-hop latency, packet loss, and jitter with sample-size context.
-- Reverse DNS and ASN/owner enrichment on every hop.
-- Cloud topology overlay — hops on AWS, Azure, and GCP are labelled
-  with region, VPC, and managed-service identifiers.
-- Path-change detection with historical diff and replay.
-- Native alerting on path change, per-hop latency, and per-hop loss.
-- Tight integration with Datadog APM, Synthetics, and Service Map for
-  end-to-end correlation.
-
-  [Datadog traceroute blog](https://www.datadoghq.com/blog/network-test-protocols/)
-
-### SolarWinds — NetPath, NPM, Engineer's Toolset
-
-- TCP-based path discovery as the *default* mode (NetPath), because
-  ICMP is dropped or rate-limited on many enterprise and ISP paths;
-  UDP and ICMP modes available as alternatives.
-- Hop-by-hop latency, packet loss, and jitter per probe interval.
-- ASN and owner identification per hop, plus network-layer segmentation
-  (LAN, WAN/ISP, cloud, target-service zone) shown visually.
-- Continuous probing from multiple polling agents to the same target,
-  with cross-agent comparison.
-- Path-change tracking with historical replay and snapshot diff.
-- Alerting on path change, hop latency, and hop loss; integrated into
-  NPM and Server & Application Monitor.
-- Engineer's Toolset adds ad-hoc traceroute and related utilities for
-  on-demand investigation outside of scheduled monitoring.
-
-### Parity Matrix
-
-`NAM target this VI` = parity items committed to in this VI's scope.
-`future VI` = explicitly deferred to a sibling VI to keep this one
-shippable. `partial` = exists today but does not meet operator
-expectations versus the competitive bar.
-
-| Capability                                  | Datadog   | SolarWinds   | Dynatrace today | DT after this VI   |
-|---------------------------------------------|:---------:|:------------:|:---------------:|:------------------:|
-| ICMP-probe traceroute                       | yes       | yes          | Extension       | yes                |
-| TCP-probe traceroute                        | yes       | yes (default)| no              | yes                |
-| UDP-probe traceroute                        | yes       | yes          | no              | yes                |
-| Automatic probe-protocol fallback           | yes       | partial      | no              | yes                |
-| Per-hop latency                             | yes       | yes          | Extension       | yes                |
-| Per-hop jitter                              | yes       | yes          | no              | yes                |
-| Reverse DNS enrichment per hop              | yes       | yes          | no              | yes                |
-| ASN / owner enrichment per hop              | yes       | yes          | no              | yes                |
-| Configurable max-hops and probe count       | yes       | yes          | Extension       | yes                |
-| Path-change detection                       | yes       | yes          | Extension       | yes                |
-| Historical path diff / replay               | yes       | yes          | no              | yes                |
-| Native alerting on path change              | yes       | yes          | no              | yes                |
-| Native alerting on per-hop loss / latency   | yes       | yes          | no              | yes                |
-| Ad-hoc on-demand probe                      | partial   | yes (toolset)| partial         | yes                |
-| Per-hop response %                          | No        | No           | No              | Yes                |
-
-### Priority implications for this VI
-
-- *Probe-protocol parity is non-negotiable*: TCP-probe traceroute is
-  the default in SolarWinds NetPath because ICMP may be rate-limited or
-  blocked across many enterprise paths. NAM must support TCP, UDP, and
-  ICMP probe modes — with automatic fallback — or lose deals where
-  operators need to traverse strict firewalls.
-- *Hop enrichment is the differentiator*: Both competitors enrich every
-  hop with reverse DNS and ASN/owner. Without it, NAM traceroute output
-  reads as "raw IPs" to operators and fails the eye test in side-by-side
-  demos.
-- *Path-change detection drives alert value*: Without it, traceroute is
-  diagnostic-only. With it, traceroute becomes a proactive signal worth
-  keeping monitors enabled for, which sustains adoption.
-- *Deferred items kept the VI shippable*: Cloud-topology overlay and
-  ad-hoc toolset-style utilities are excluded so the core parity bar
-  is reachable in a single release cycle; sibling VIs cover them.
-
-### Competitive Acceptance Criteria
-
-In addition to the per-capability items in *E2E Acceptance Criteria*,
-the VI is competitively complete when:
-
-1. *Side-by-side review*: For three representative customer scenarios
-   (long-haul WAN, ICMP-blocked enterprise path, multi-cloud egress),
-   NAM Traceroute produces diagnostic output equivalent to or better
-   than Datadog Network Path and SolarWinds NetPath on the
-   parity-matrix items committed to this VI.
-2. *Field positioning*: SE enablement materials include a competitive
-   positioning section with the parity matrix and one head-to-head
-   demo per competitor.
-3. *No "go elsewhere" gaps*: No item that the parity matrix marks
-   `yes` for both Datadog and SolarWinds is missing from NAM at GA.
-   Cloud topology overlay and ad-hoc tooling are excluded by the
-   explicit deferrals documented in *Out of Scope*.
-
-## Functional Requirements / Solution Journey
-
-### Use Cases
-
-1. NetOps engineer configures a Traceroute monitor against a critical
-   service, selects the probe protocol (ICMP, UDP, or TCP) per path
-   conditions, and gets a continuously updated hop-by-hop view with
-   reverse-DNS and ASN/owner labels on every hop.
-2. SRE receives an alert when the path to a critical service changes
-   (new hop sequence, new ASN appears, or per-hop latency/loss crosses
-   a threshold) and opens the historical path diff to see exactly
-   which hops changed and when.
-3. Platform admin rolls out the expanded traceroute capability with
-   safe defaults so existing traceroute monitors continue to run
-   unchanged, then switches selected monitors to TCP-probe mode where
-   ICMP is blocked.
-4. SRE sets thresholds on per-hop loss and per-hop latency with
-   deterministic behavior under low sample counts (for example
-   "evaluate only when sample size ≥ N").
-5. Investigator opens a historical traceroute execution and side-by-side
-   diffs it against the previous execution and the last known good
-   path to confirm a routing change as root cause of an incident.
-6. Analyst queries historical NAM data to trend per-hop metrics and
-   path-change frequency across regions and correlate with incidents.
-7. During traceroute filtering Traceroute Hops and destination can be selected based on properties defined by the user.
-
-### User Stories
-
-- *NetOps engineer (multi-protocol)*: "As a NetOps engineer, I want a
-  scheduled traceroute that runs over TCP probes when ICMP is blocked,
-  so I can see the path through firewalled segments without external
-  tcptraceroute."
-- *Incident commander (path alerting)*: "As an incident commander, I
-  want to be alerted the moment the path to a Tier-1 service changes
-  hop sequence or ASN, so I know about ISP/peering issues before
-  customers report them."
-- *Investigator (path diff)*: "As an investigator, I want a
-  side-by-side diff of the current path against the last known good
-  path, so I can see exactly which hops changed and stop pasting
-  traceroutes into spreadsheets."
-- *Operator (hop enrichment)*: "As an operator, I want each hop
-  labelled with reverse DNS and ASN/owner, so I immediately know
-  whose network the latency is in."
-- *Platform admin*: "As a platform admin, I want safe defaults for
-  the new options, so my existing traceroute monitor fleet keeps
-  running without a forced migration."
-- *Alerting owner*: "As an alerting owner, I want sample-size-aware
-  thresholds, so one hop blip doesn't page on-call."
-- *Analyst*: "As an analyst, I want per-hop metrics and path-change
-  events available in DQL and dashboards, so I can correlate regional
-  path trends with incidents."
-
-### Prior work
-
-- [Traceroute extension](https://docs.dynatrace.com/docs/observe/infrastructure-observability/extensions/traceroute)
-- [Traceroute Hub](https://www.dynatrace.com/hub/detail/traceroute/?query=traceroute)
-- [Dev environment](https://yts0540d.dev.apps.dynatracelabs.com/ui/apps/my.traceroute.map/)
-- traceroute_extension.yaml (see attached)
-
-#### Scope
-
-- ICMP only on Linux and Windows
-- Traceroute entity linked to a network:device entity
-
-### Solution Concept
-
-1. Extend the NAM with Traceroute runner to a multi-protocol implementation
-   supporting ICMP, UDP, and TCP probes with automatic fallback when
-   an upstream protocol is rate-limited or blocked.
-2. Extend monitor schema and API to expose new options — probe
-   protocol, max-hops, per-hop probe count, per-hop timeout.
-3. Add a hop-enrichment pipeline that resolves reverse DNS and looks
-   up ASN/owner per hop IP.
-4. Add a path-comparison screen that diffs each new execution against
-   a rolling "last known good" path and emits a path-change event
-   when hop sequence, ASN sequence, or layer segmentation changes.
-5. Surface new fields in the monitor configuration UI including a hop-by-hop visualization  for one traceroute only and a
-   path-diff view; Define recommended thresholds for alerting templates.
-
-#### Alerting
-
-##### Health Alerts
-
-- Based on user setting: Target not reached
-
-##### Warning Signals
-
-- Based on user setting: Target not reached
-- Based on user setting: Per hop threshold or baseline
-- Path variation: configurable based on the number of hop variation
-
-##### INFO Signals
-
-- Path variation: configurable based on the number of hop variation
-
-### Delivery Phases based on market priority
-
-The phases content may be altered based on engineering input, as it may be more efficient to group some feature for efficiency purposes.
-
-IPv4, IPv6 are supported for all features.
-
-#### Phase I
-
-Finalize metric and hop-record taxonomy; implement multi-protocol runner and data-model updates.
-
-- ICMP for Linux and Windows
-- Reverse DNS enrichement
-- Hop-by-Hop latency
-- Hop-by-Hop jitter
-- Hop-by-Hop latency
-- Max hop and probe count
-- Minimal in-synthetic individual path visualization
-- Alerting
-
-#### Phase II
-
-Extend protocol support
-
-- Linux only: TCP SYN and TCP SACK
-- On demand probes
-
-#### Phase III
-
-Improve usability
-
-- Automatic fall for TCP:  SYN (the default), SACK, and prefer_sack
-- UDP
-- Autonomous System (BGP) enrichement
-- TCP and UDP for Windows: nmap and tracetcp third party tools.
-
-### Dependencies
-
-- *Traceroute runner*: Windows "tracert" only supports ICMP, while Linux "traceroute" supports ICMP, UDP and TCP SYN
-- *Hop-enrichment service*: reverse DNS resolver and ASN/owner lookup
-  pipeline with caching. Confirm whether an existing internal service
-  can be reused or a new lightweight component is needed.
-- *Path-comparison service*: diffing engine and path-change event
-  emission. Likely a new service co-located with the NAM result
-  pipeline.
-- *UI/UX*: Graphical component. 
-- *Alerting platform*: support for path-change events and per-hop
-  thresholds in the existing alerting surface.
-
-## Non-Functional Requirements
-
-- *Platform*: This is supported in Gen3 only. No support of Gen2.
-- *Performance*: similar to ICMP and TCP NAM; new metric emission and hop
-  enrichment stay within an agreed per-run resource budget.
-- *Reliability*: Result completeness and protocol-fallback behavior
-  consistent across retries and partial samples.
-- *Scalability*: Schema and pipeline support existing and projected
-  traceroute monitor volume — including the per-hop time series —
-  without breaking ingestion SLOs.
-- *Usability*: New options (probe protocol, max-hops, probe count,
-  path-change sensitivity) are understandable to a NetOps generalist;
-  defaults are safe.
-
-## Enablement Requirements
-
-- *Support*: Runbooks updated to interpret per-hop metrics, path-change
-  events, and protocol-fallback behavior; troubleshooting guide
-  published before GA.
-- *Internal Adoption*: Dynatrace internal NetOps/SRE adopts the
-  expanded traceroute monitors before customer-facing rollout.
-  Product Marketing to confirm packaging language before GA.
-- *Marketing*: Release note and short demo video for the launch;
-  competitive-positioning blog post; field enablement deck for AEs
-  and SEs including the parity matrix.
-- *Sales / Field*: SE enablement covering when to use which probe
-  protocol, how to interpret path-change events, and head-to-head
-  positioning against Datadog Network Path and SolarWinds NetPath.
-
-## E2E Acceptance Criteria
-
-1. *Probe protocol selection*: NAM Traceroute monitors accept ICMP,
-   UDP, or TCP as the probe protocol, with TCP as the recommended
-   default for paths that block ICMP; misconfiguration is surfaced
-   with a clear validation message.
-2. *Protocol fallback*: When the configured probe protocol fails to
-   resolve a hop, the runner can optionally fall back to a secondary
-   protocol per a documented policy; behavior is logged on the result.
-3. *Execution output*: Each Traceroute execution returns an ordered
-   hop list with per-hop latency, packet loss, and jitter, with
-   explicit sample size, up to a configurable max-hops limit.
-4. *Configurable execution*: Operators can configure max-hops,
-   per-hop probe count, per-hop timeout, and path-change sensitivity
-   with safe defaults.
-5. *Hop enrichment*: Every resolved hop in a Traceroute result is
-   enriched with reverse DNS (when available) and ASN/owner lookup,
-   and the result includes layer segmentation (LAN / WAN / ISP /
-   cloud / target zone) where determinable.
-6. *Path-change detection*: Path changes (hop sequence, ASN sequence,
-   or layer transitions) are detected against a rolling baseline and
-   emitted as discrete events queryable and alertable end-to-end.
-7. *Historical path diff*: Operators can open any Traceroute execution
-   and see a side-by-side diff against the previous execution and
-   against the last known good path, with changed hops visually
-   marked.
-8. *Alerting on path and hops*: Alerts can target path-change events
-   and per-hop loss and latency thresholds, with deterministic
-   evaluation and sample-size guards under low sample counts.
-9. *Persistence and query*: Hop sequences and per-hop time series are
-    persisted and queryable in existing dashboarding and historical
-    analysis surfaces end-to-end.
-10. *Multi-source probing*: Traceroute monitors can run from multiple
-    NAM sources to the same target, and results can be compared
-    across sources in the result view.
-11. *Documentation*: Customer documentation covers configuration,
-    metric interpretation, recommended thresholds, migration guidance,
-    and a competitive positioning section with the parity matrix.
-12. *Competitive parity (per Competitive Landscape)*: Side-by-side
-    review against Datadog Network Path and SolarWinds NetPath for
-    the three reference scenarios (long-haul WAN, ICMP-blocked path,
-    multi-cloud egress) shows no missing capability from the parity
-    matrix items committed to this VI.
-
-## Customer Zero Planning
-
-- *Subset for Customer Zero*: Traceroute multi-protocol (ICMP / UDP /
-  TCP probes) with automatic fallback, per-hop enrichment, path-change
-  detection, and the path-diff view. Alerting on path-change events
-  and per-hop loss/latency.
-- *Success signal*: Customer Zero resolves at least one representative
-  routing or peering incident using the new metrics without falling
-  back to external tooling, reports zero critical regressions on the
-  converted monitors, and confirms alert volume stays within ±10 %
-  of the pre-conversion baseline.
-- *Exit from Customer Zero*: Internal adoption hits 100 % of planned
-  monitors with success signal met, design-partner sign-off recorded,
-  and no open Sev-1 / Sev-2 issues against the new code paths.
-
-## E2E Demo (for acceptance)
-
-1. Open monitor creation, choose Traceroute, select TCP as the probe
-   protocol, set max hops and per-hop probe count, save.
-2. Run the monitor against a target reachable only through an
-   ICMP-blocking firewall; show hop list with reverse DNS, ASN/owner,
-   layer segmentation, and per-hop latency/loss/jitter.
-3. Re-run with the probe protocol set to ICMP against the same target;
-   show the runner fall back to TCP per the configured policy and
-   note this in the result view.
-4. Re-run the monitor after forcing a path change (for example switch
-   source region) and show the path-diff view side-by-side with the
-   previous path; show the path-change event in the events surface.
-5. Open an alert template, set thresholds on path-change events,
-   per-hop loss, and per-hop latency; demonstrate sample-size guarded
-   evaluation.
-6. Open a dashboard or query surface and show per-hop metrics and
-   path-change events trending over time.
-7. Run the head-to-head competitive demo: same target, same time,
-   NAM Traceroute alongside Datadog Network Path and SolarWinds
-   NetPath; walk through the parity-matrix items and show no missing
-   capability for the items committed to this VI.
-8. Show the published help page covering the new options and the
-   competitive positioning section.
-
-## Out of Scope
-
-- NetFlow enrichment and flow-based diagnostics.
-- Application traffic enrichment.
-- Cloud topology overlay (AWS / Azure / GCP region, VPC, and managed
-  service labels on traceroute hops) — deferred to a sibling VI..
-- Synthetic App UI redesign beyond the minimal additions required to expose new
-  fields, the hop-by-hop visualization, the path-diff view, and the
-  competitive-positioning help content.
-
-## Success Metrics
-
-Evaluated 3–6 months post-GA.
-
-- *Diagnostic self-sufficiency*: ≥ 70 % of traceroute-related support
-  escalations resolved using NAM data only, without falling back to
-  external tooling (baseline: current escalation rate from Support
-  ticket tags).
-- *Adoption — new monitors*: ≥ 60 % of the traceroute monitors
-  created in the first 3 months post-GA use at least one expanded
-  option (non-ICMP probe protocol, sample-size-aware threshold, or
-  path-change alerting).
-- *Alert quality*: ≥ 50 % reduction in false-positive rate on
-  per-hop and path-change alerts after enabling sample-size-aware
-  and baseline-aware thresholds (compared to the same monitors before
-  migration).
-- *Path-change signal value*: ≥ 1 unplanned routing or peering issue
-  per Customer Zero per quarter is detected by path-change alerts
-  *before* end-user impact is reported, demonstrating proactive value.
-- *Competitive — head-to-head*: Dynatrace can check the "traceroute"  box in all RFP,RFI
-- *Competitive — gap report*: At GA, no item that the parity matrix
-  marks `yes` for both Datadog and SolarWinds is missing from NAM
-  Traceroute, excluding the explicit deferrals in *Out of Scope*.
-
-## Pricing
-
-Treated as additive enhancement under the existing NAM synthetic entitlement (metric based) — no pricing change planned.
-
-## Cost Analysis
-
-- *Engineering effort (proposed t-shirt: L)*: Five parallel workstreams
-  at ~2 sprints each, plus ~1 sprint for documentation and field
-  enablement. Refine after Dev Epic breakdown.
-  - NAM Traceroute multi-protocol runner (ICMP / UDP / TCP) with
-    automatic fallback.
-  - Hop-enrichment service (reverse DNS + ASN/owner lookup with
-    caching).
-  - Path-comparison service (diffing, last-known-good baseline,
-    path-change event emission).
-  - Monitor schema, API extensions, and data pipeline + storage
-    changes for hop sequences and per-hop time series.
-  - Configuration UI + result view (hop visualization, path-diff,
-    competitive-positioning content).
-- *Storage and ingest*: Per-run footprint grows materially because hop
-  sequences and per-hop time series are stored. Provisional estimate:
-  expanded traceroute records ~5–10× the per-row size of the current
-  legacy traceroute output, depending on average path length. Confirm
-  with data platform; expect a dedicated retention / aggregation
-  policy for per-hop history (for example raw for N days, daily
-  aggregates beyond).
-- *Compute*: Hop enrichment adds reverse-DNS and ASN-lookup cost —
-  design must cache aggressively to keep per-execution cost low.
-  Path-comparison is cheap per execution but accumulates with monitor
-  count. Validate under scale testing before GA.
-- *External lookups*: ASN/owner lookup needs a maintained data source
-  (internal mirror of routing data or a vetted external feed).
-  Confirm source, refresh cadence, and any licensing cost.
-- *Operational*: Moderate support load increase during preview as
-  customers adopt path-change alerts (tuning takes time). Offset
-  post-GA by reduced escalation volume on traceroute diagnostics.
+| Diagnosing RTT a real flow would see           | TCP (matches production hashing best)   |
