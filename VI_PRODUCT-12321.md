@@ -246,7 +246,7 @@ the VI is competitively complete when:
 ### Configuration
 
 - Frequency
-- number of traceroutes to execute
+- number of traceroutes to execute (3 at least to calculate Jitter, otherwise Jitter metric is not calculted )
 
 #### Performance
 
@@ -316,6 +316,10 @@ Per hop:
 - Packet loss
 
 Note:Metrics are reported on a per hop basis, When a target fails, no other metric is  written, The  hop performance metrics are written in all cases
+
+#### API
+
+Support for "platform API" only.
 
 ### Delivery Phases based on market priority
 
@@ -428,7 +432,7 @@ IPv4, IPv6 are supported for all features.
 - Single traceroute visual representation
 - Alterting baseline (if no generic solution is available at implementation time)
 - Public locations
-- Multi target NAM.
+- Multi target NAM
 - Automatic protocol fallback
 
 ## December 26 Rally Success Metrics
@@ -444,8 +448,6 @@ Evaluated 3–6 months post-GA.
   option (non-ICMP probe protocol,
   path-change alerting).
 - *Competitive — head-to-head*: Dynatrace can check the "traceroute"  box in all RFP,RFI
-- *Competitive — gap report*: At GA, no item that the parity matrix
-  marks `yes` for both Datadog and SolarWinds is missing from NAM
   Traceroute, excluding the explicit deferrals in *Out of Scope*.
 
 ## Pricing
