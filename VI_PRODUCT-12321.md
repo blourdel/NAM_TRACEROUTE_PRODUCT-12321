@@ -247,6 +247,7 @@ the VI is competitively complete when:
 
 - Frequency
 - number of traceroutes to execute (3 at least to calculate Jitter, otherwise Jitter metric is not calculted )
+- Single target
 
 #### Performance
 
