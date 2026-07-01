@@ -302,7 +302,8 @@ Existing network devices are enriched on read based on IP addresses.
 
 All NAM dimensions complemented by:
 
-- Hop id
+- Hop sequence id
+- IP address
 
 #### Metrics
 
