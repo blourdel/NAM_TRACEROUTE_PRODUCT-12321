@@ -296,7 +296,7 @@ The alerting schema is at parity with other NAM.
 
 #### Entity
 
-A smartscape node is created for each hop
+Existing network devices are enriched on read based on IP addresses.
 
 #### Dimensions
 
