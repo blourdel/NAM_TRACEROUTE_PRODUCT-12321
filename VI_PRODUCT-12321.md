@@ -124,7 +124,7 @@ bridge to external tools for hop-level diagnostics.
 shippable. `partial` = exists today but does not meet operator
 expectations versus the competitive bar.
 
-| Capability                                  | Datadog   | SolarWinds   | Dynatrace today | DT after this VI   |
+| Capability                                  | Datadog   | SolarWinds   | Dynatrace today | Dec 26 Rally       |
 |---------------------------------------------|:---------:|:------------:|:---------------:|:------------------:|
 | ICMP-probe traceroute                       | yes       | yes          | Extension       | yes                |
 | TCP-probe traceroute                        | yes       | yes          | no              | yes                |
@@ -223,8 +223,6 @@ the VI is competitively complete when:
 - *Platform admin*: "As a platform admin, I want safe defaults for
   the new options, so my existing traceroute monitor fleet keeps
   running without a forced migration."
-- *Alerting owner*: "As an alerting owner, I want sample-size-aware
-  thresholds, so one hop blip doesn't page on-call."
 - *Analyst*: "As an analyst, I want per-hop metrics and path-change
   events available in DQL and dashboards, so I can correlate regional
   path trends with incidents."
@@ -235,11 +233,6 @@ the VI is competitively complete when:
 - [Traceroute Hub](https://www.dynatrace.com/hub/detail/traceroute/?query=traceroute)
 - [Dev environment](https://yts0540d.dev.apps.dynatracelabs.com/ui/apps/my.traceroute.map/)
 - traceroute_extension.yaml (see attached)
-
-#### Scope
-
-- ICMP only on Linux and Windows
-- Traceroute entity linked to a network:device entity
 
 ### Solution Concept
 
@@ -298,6 +291,10 @@ As per other NAM: 1 minute minimum, to 1 hour and custom
 
 ### Metrics and dimensions
 
+#### Entity
+
+A smartscape node is created for each hop
+
 #### Dimensions
 
 All NAM dimensions complemented by:
@@ -317,9 +314,8 @@ Per hop:
 - Jitter
 - RTT
 - Packet loss
-- Traversal count (number of traceroute going through this hop)
 
-Note:Metrics are reported on a per hop basis, When a target fails, no other metric is  written, The performance metrics are written in all cases
+Note:Metrics are reported on a per hop basis, When a target fails, no other metric is  written, The  hop performance metrics are written in all cases
 
 ### Delivery Phases based on market priority
 
@@ -402,8 +398,7 @@ IPv4, IPv6 are supported for all features.
 ## December 26 Rally Customer Zero Planning
 
 - *Subset for Customer Zero*: Traceroute multi-protocol (ICMP / UDP /
-  TCP probes) with automatic fallback, per-hop enrichment, path-change
-  detection. Alerting on per-hop loss/RTT.
+  TCP probes), fallback, per-hop enrichment, Alerting on per-hop loss/RTT.
 - *Success signal*: Customer Zero resolves at least one representative
   routing or peering incident using NAM traceroute without falling
   back to external tooling.
@@ -411,7 +406,7 @@ IPv4, IPv6 are supported for all features.
   monitors with success signal met, design-partner sign-off recorded,
   and no open Sev-1 / Sev-2 issues against the new code.
 
-## E2E Demo (for acceptance)
+## December 26 Rally E2E Demo (for acceptance)
 
 1. Open monitor creation, choose Traceroute, select TCP as the probe
    protocol, set max hops and per-hop probe count, save.
@@ -422,14 +417,9 @@ IPv4, IPv6 are supported for all features.
    per-hop loss, and per-hop RTT.
 4. Open a dashboard or query surface and show per-hop metrics and
    path-change events trending over time.
-5. Run the head-to-head competitive demo: same target, same time,
-   NAM Traceroute alongside Datadog Network Path and SolarWinds
-   NetPath; walk through the parity-matrix items and show no missing
-   capability for the items committed to this VI.
-6. Show the published help page covering the new options and the
-   competitive positioning section.
+5. Show the published help page covering the new options.
 
-## Out of Scope
+## December 26 Rally Out of Scope
 
 - Windows: ICMP, TCP SYN and TCP SACK
 - Autonomous System (BGP) enrichement
@@ -439,8 +429,9 @@ IPv4, IPv6 are supported for all features.
 - Alterting baseline (if no generic solution is available at implementation time)
 - Public locations
 - Multi target NAM.
+- Automatic protocol fallback
 
-## Success Metrics
+## December 26 Rally Success Metrics
 
 Evaluated 3–6 months post-GA.
 
@@ -452,9 +443,6 @@ Evaluated 3–6 months post-GA.
   created in the first 3 months post-GA use at least one expanded
   option (non-ICMP probe protocol,
   path-change alerting).
-- *Path-change signal value*: ≥ 1 unplanned routing or peering issue
-  per Customer Zero per quarter is detected by path-change alerts
-  *before* end-user impact is reported, demonstrating proactive value.
 - *Competitive — head-to-head*: Dynatrace can check the "traceroute"  box in all RFP,RFI
 - *Competitive — gap report*: At GA, no item that the parity matrix
   marks `yes` for both Datadog and SolarWinds is missing from NAM
