@@ -264,6 +264,8 @@ As per other NAM: 1 minute minimum, to 1 hour and custom
 
 #### Alerting
 
+The alerting schema is at parity with other NAM.
+
 ##### Health Alerts
 
 - Per request performance
@@ -435,6 +437,7 @@ IPv4, IPv6 are supported for all features.
 - Public locations
 - Multi target NAM
 - Automatic protocol fallback
+- target filtering (host group, etc.)
 
 ## December 26 Rally Success Metrics
 
