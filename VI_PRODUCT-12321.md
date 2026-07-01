@@ -404,7 +404,7 @@ IPv4, IPv6 are supported for all features.
 ## December 26 Rally Customer Zero Planning
 
 - *Subset for Customer Zero*: Traceroute multi-protocol (ICMP / UDP /
-  TCP probes), per-hop enrichment, Alerting on per-hop loss/RTT.
+  TCP probes), per-hop enrichment, Alerting on per-hop RTT.
 - *Success signal*: Customer Zero resolves at least one representative
   routing or peering incident using NAM traceroute without falling
   back to external tooling.
