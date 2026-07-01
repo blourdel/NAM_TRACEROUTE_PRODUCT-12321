@@ -335,7 +335,7 @@ IPv4, IPv6 are supported for all features.
 
 #### December 26 Rally
 
-- Linux traceroute runner, including containerized, private locations only : ICMP, TCP SYN
+- Linux traceroute runner, including containerized, private locations only : ICMP, UDP, TCP SYN
 - Reverse DNS enrichement
 - Hop-by-Hop jitter, RTT metrics (per hop and target)
 - Max hop and probe count
