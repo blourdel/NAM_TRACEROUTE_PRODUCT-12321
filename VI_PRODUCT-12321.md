@@ -137,9 +137,9 @@ expectations versus the competitive bar.
 | Path-change detection                       | yes       | yes          | No              | No                 |
 | Historical path diff / replay               | yes       | yes          | no              | No                 |
 | Native alerting on path change              | yes       | yes          | no              | No                 |
-| Native alerting on per-hop loss / RTT       | yes       | yes          | no              | yes                |
+| Native alerting on per-hop loss / RTT       | yes       | yes          | no              | No (stretch goal)  |
 | Ad-hoc on-demand probe                      | partial   | yes          | no              | yes                |
-| Per-hop response %                          | No        | No           | No              | Yes                |
+| Per-hop response %                          | No        | No           | No              | No (stretch goal)  |
 
 ### Priority implications for this VI
 
@@ -246,7 +246,7 @@ the VI is competitively complete when:
 ### Configuration
 
 - Frequency
-- number of traceroutes to execute (3 at least to calculate Jitter, otherwise Jitter metric is not calculted )
+- Number of probes to execute (3 at least to calculate Jitter, otherwise Jitter metric is not calculated)
 - Single target
 
 #### Performance
@@ -261,7 +261,7 @@ Per target:
 
 #### Frequency
 
-As per other NAM: 1 minute minimum, to 1 hour and custom
+As per other NAM: 1 minute minimum, to 1 hour
 
 #### Alerting
 
@@ -336,10 +336,10 @@ IPv4, IPv6 are supported for all features.
 
 - Linux traceroute runner, including containerized, private locations only : ICMP, TCP SYN
 - Reverse DNS enrichement
-- Hop-by-Hop jitter, RTT, packet loss metrics (per hop and target)
+- Hop-by-Hop jitter, RTT metrics (per hop and target)
 - Max hop and probe count
 - Tabular individual path visualization
-- Alerting
+- Gen2 Alerting
 - On demand probes (usual 2-3 minute delay)
 
 ### Dependencies
@@ -388,24 +388,23 @@ IPv4, IPv6 are supported for all features.
    UDP, or TCP as the probe protocol, with TCP as the recommended
    default for paths that block ICMP.
 - *Execution output*: Each Traceroute execution returns an ordered
-   hop list with per-hop RTT, packet loss, and jitter, with
-   explicit sample size, up to a configurable max-hops limit.
+   hop list with per-hop RTT, and jitter, with explicit sample size, up to a configurable max-hops limit.
 - *Configurable execution*: Operators can configure max-hops,
    per-hop probe count, per-hop timeout sensitivity
    with safe defaults.
 - *Hop enrichment*: Every resolved hop in a Traceroute result is
    enriched with reverse DNS (when available).
-- Alerting on target and hops: Alerts can target per-hop loss, jitter and RTT thresholds.
+- Alerting on target and hops: Alerts can target per-hop jitter and RTT thresholds.
 - Persistence and query: Hop sequences and per-hop time series are
     persisted and queryable in existing dashboarding and historical
     analysis surfaces end-to-end.
 - Multi-location probing: Traceroute monitors can run from multiple
-    location to the same target but to a single target.
+    location to a single target.
 
 ## December 26 Rally Customer Zero Planning
 
 - *Subset for Customer Zero*: Traceroute multi-protocol (ICMP / UDP /
-  TCP probes), fallback, per-hop enrichment, Alerting on per-hop loss/RTT.
+  TCP probes), per-hop enrichment, Alerting on per-hop loss/RTT.
 - *Success signal*: Customer Zero resolves at least one representative
   routing or peering incident using NAM traceroute without falling
   back to external tooling.
@@ -418,10 +417,10 @@ IPv4, IPv6 are supported for all features.
 1. Open monitor creation, choose Traceroute, select TCP as the probe
    protocol, set max hops and per-hop probe count, save.
 2. Run the monitor against a target reachable only through an
-   ICMP-blocking firewall; show hop list with reverse DNS, ASN/owner,
-   layer segmentation, and per-hop RTT/loss/jitter.
+   ICMP-blocking firewall; show hop list with reverse DNS,
+   layer segmentation, and per-hop RTT and jitter.
 3. Open an alert template, set thresholds on path-change events,
-   per-hop loss, and per-hop RTT.
+   per-hop RTT.
 4. Open a dashboard or query surface and show per-hop metrics and
    path-change events trending over time.
 5. Show the published help page covering the new options.
@@ -438,7 +437,7 @@ IPv4, IPv6 are supported for all features.
 - Public locations
 - Multi target NAM
 - Automatic protocol fallback
-- target filtering (host group, etc.)
+- target filtering (host group, smartscape entity, etc.)
 
 ## December 26 Rally Success Metrics
 
