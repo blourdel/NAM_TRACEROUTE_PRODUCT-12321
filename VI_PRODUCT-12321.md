@@ -306,7 +306,7 @@ All NAM dimensions complemented by:
 Per target:
 
 - Jitter
-- RTT 
+- RTT
 - Packet loss
 
 Per hop:
@@ -314,6 +314,8 @@ Per hop:
 - Jitter
 - RTT
 - Packet loss
+- Availability
+- Execution
 
 Note:Metrics are reported on a per hop basis, When a target fails, no other metric is  written, The  hop performance metrics are written in all cases
 
@@ -329,11 +331,11 @@ IPv4, IPv6 are supported for all features.
 
 #### December 26 Rally
 
-- Linux traceroute runner, including containerized, private locations only : ICMP, TCP SYN and TCP SACK
+- Linux traceroute runner, including containerized, private locations only : ICMP, TCP SYN
 - Reverse DNS enrichement
 - Hop-by-Hop jitter, RTT, packet loss metrics (per hop and target)
 - Max hop and probe count
-- Minimal individual path visualization
+- Tabular individual path visualization
 - Alerting
 - On demand probes (usual 2-3 minute delay)
 
@@ -355,8 +357,6 @@ IPv4, IPv6 are supported for all features.
 - *Platform*: This is supported in Gen3 only. No support of Gen2.
 - *Performance*: similar to ICMP and TCP NAM; new metric emission and hop
   enrichment stay within an agreed per-run resource budget.
-- *Reliability*: Result completeness and protocol-fallback behavior
-  consistent across retries and partial samples.
 - *Scalability*: Schema and pipeline support existing and projected
   traceroute monitor volume — including the per-hop time series —
   without breaking ingestion SLOs.
@@ -426,6 +426,7 @@ IPv4, IPv6 are supported for all features.
 ## December 26 Rally Out of Scope
 
 - Windows: ICMP, TCP SYN and TCP SACK
+- Linux: TCP SACK
 - Autonomous System (BGP) enrichement
 - NetFlow enrichment and flow-based diagnostics.
 - Application traffic enrichment.
