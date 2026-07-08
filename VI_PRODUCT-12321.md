@@ -137,7 +137,7 @@ expectations versus the competitive bar.
 | Path-change detection                       | yes       | yes          | No              | No                 |
 | Historical path diff / replay               | yes       | yes          | no              | No                 |
 | Native alerting on path change              | yes       | yes          | no              | No                 |
-| Native alerting on per-hop loss / RTT       | yes       | yes          | no              | No (stretch goal)  |
+| Native alerting on per-hop loss / RTT       | yes       | yes          | no              | No                 |
 | Ad-hoc on-demand probe                      | partial   | yes          | no              | yes                |
 | Per-hop response %                          | No        | No           | No              | No (stretch goal)  |
 
@@ -340,7 +340,6 @@ IPv4, IPv6 are supported for all features.
 - Hop-by-Hop jitter, RTT metrics (per hop and target)
 - Max hop and probe count
 - Tabular individual path visualization
-- Gen2 Alerting
 - On demand probes (usual 2-3 minute delay)
 
 ### Dependencies
@@ -435,7 +434,7 @@ IPv4, IPv6 are supported for all features.
 - NetFlow enrichment and flow-based diagnostics.
 - Application traffic enrichment.
 - Single traceroute visual representation
-- Alterting baseline (if no generic solution is available at implementation time)
+- Alterting
 - Public locations
 - Multi target NAM
 - Automatic protocol fallback
