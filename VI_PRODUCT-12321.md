@@ -430,6 +430,7 @@ IPv4, IPv6 are supported for all features.
 
 - Windows: ICMP, TCP SYN and TCP SACK
 - Linux: TCP SACK
+- Packet loss metric
 - Autonomous System (BGP) enrichement
 - NetFlow enrichment and flow-based diagnostics.
 - Application traffic enrichment.

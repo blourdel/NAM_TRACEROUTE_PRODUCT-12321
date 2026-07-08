@@ -338,3 +338,13 @@
 {"duration_ms":0.0,"event":"discover_files_result","invocation_id":"9180-1782923561014","meta":{"count":0},"pid":9180,"status":"ok","timestamp_ms":1782923561193}
 {"duration_ms":179.3618,"event":"discover_files","invocation_id":"9180-1782923561014","meta":{"globs":[]},"pid":9180,"status":"ok","timestamp_ms":1782923561194}
 {"duration_ms":179.5806,"event":"command_finish","invocation_id":"9180-1782923561014","meta":{"command":"check","exit_code":2},"pid":9180,"status":"ok","timestamp_ms":1782923561194}
+{"duration_ms":0.0,"event":"command_start","invocation_id":"44932-1783496993941","meta":{"command":"check","json_output":true},"pid":44932,"status":"ok","timestamp_ms":1783496993941}
+{"duration_ms":247.4836,"event":"startup","invocation_id":"44932-1783496993941","meta":{"command":"check"},"pid":44932,"status":"ok","timestamp_ms":1783496993942}
+{"duration_ms":0.0,"event":"discover_files_result","invocation_id":"44932-1783496993941","meta":{"count":0},"pid":44932,"status":"ok","timestamp_ms":1783496994168}
+{"duration_ms":225.71169999999998,"event":"discover_files","invocation_id":"44932-1783496993941","meta":{"globs":[]},"pid":44932,"status":"ok","timestamp_ms":1783496994168}
+{"duration_ms":226.0915,"event":"command_finish","invocation_id":"44932-1783496993941","meta":{"command":"check","exit_code":2},"pid":44932,"status":"ok","timestamp_ms":1783496994168}
+{"duration_ms":0.0,"event":"command_start","invocation_id":"44108-1783497018446","meta":{"command":"check","json_output":true},"pid":44108,"status":"ok","timestamp_ms":1783497018446}
+{"duration_ms":353.8692,"event":"startup","invocation_id":"44108-1783497018446","meta":{"command":"check"},"pid":44108,"status":"ok","timestamp_ms":1783497018447}
+{"duration_ms":0.0,"event":"discover_files_result","invocation_id":"44108-1783497018446","meta":{"count":0},"pid":44108,"status":"ok","timestamp_ms":1783497018698}
+{"duration_ms":251.4586,"event":"discover_files","invocation_id":"44108-1783497018446","meta":{"globs":[]},"pid":44108,"status":"ok","timestamp_ms":1783497018699}
+{"duration_ms":251.7006,"event":"command_finish","invocation_id":"44108-1783497018446","meta":{"command":"check","exit_code":2},"pid":44108,"status":"ok","timestamp_ms":1783497018699}

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python \"$env:USERPROFILE\\\\.claude\\\\scripts\\\\vi_to_jira.py\" \"VI_PRODUCT-12321.md\" \"PRODUCT-12321\" \"main\" \"https://github.com/blourdel/NAM_TRACEROUTE_PRODUCT-12321/blob/main/VI_PRODUCT-12321.md\" 2>&1)"
+    ]
+  }
+}
