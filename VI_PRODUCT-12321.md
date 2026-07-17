@@ -307,13 +307,13 @@ All NAM dimensions complemented by:
 
 #### Metrics
 
-Per target:
+#### Per target
 
 - Jitter
 - RTT
 - Packet loss
 
-Per hop:
+#### Per hop
 
 - Jitter
 - RTT
@@ -459,6 +459,17 @@ Evaluated 3–6 months post-GA.
 
 It follows the  NAM synthetic entitlement (metric based).
 The billed metrics are defined in the "metrics and dimensions" section.
+
+### Example
+
+Traceroute from one private location to a target ip address, 2 intermediairy hops and and the target ip address hop.
+This is a total of 3 hops.
+
+#### Billed metrics
+
+   (2 (number of hops) x  number of metric per hop (5))  +  number of metric per target (3)
+
+   Total: 2x5 + 3= 13 metrics
 
 ## Traceroute 101
 
